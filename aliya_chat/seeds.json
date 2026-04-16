@@ -1,0 +1,226 @@
+[
+    {
+        "id": "daily_001",
+        "type": "daily",
+        "location": "engine_room",
+        "mood_hint": "bored_curious",
+        "context": "While doing a routine check in the engine room, found something odd — a small cluster of ice crystals on a condensation pipe. They look like tiny sculptures.",
+        "weight": 10
+    },
+    {
+        "id": "daily_002",
+        "type": "daily",
+        "location": "observation_deck",
+        "mood_hint": "peaceful",
+        "context": "Sitting in the observation deck. One of the outer planets is passing in front of Koranth, casting a long shadow. It's strangely beautiful.",
+        "weight": 8
+    },
+    {
+        "id": "daily_003",
+        "type": "daily",
+        "location": "living_quarters",
+        "mood_hint": "nostalgic",
+        "context": "Found an old playlist on the ship's media system — someone (maybe Ryoko?) organized it. The music is weird but kind of nice.",
+        "weight": 7
+    },
+    {
+        "id": "daily_004",
+        "type": "daily",
+        "location": "kitchen",
+        "mood_hint": "playful",
+        "context": "Tried combining two ration packs to make something new. The result looks... questionable. Smells okay though.",
+        "weight": 9
+    },
+    {
+        "id": "daily_005",
+        "type": "daily",
+        "location": "corridor",
+        "mood_hint": "startled",
+        "context": "The ship made a new sound — a low hum from somewhere in the lower deck. COSMOS says it's normal thermal expansion. Maybe.",
+        "weight": 8
+    },
+    {
+        "id": "daily_006",
+        "type": "daily",
+        "location": "storage",
+        "mood_hint": "nostalgic",
+        "context": "Was reorganizing storage and found Kane's spare notebook. It has the strangest book titles written on the cover page.",
+        "weight": 7
+    },
+    {
+        "id": "daily_007",
+        "type": "daily",
+        "location": "airlock",
+        "mood_hint": "awed",
+        "context": "Stepped near the airlock window. The nebula in the distance shifted colors — it's more purple than last week.",
+        "weight": 6
+    },
+    {
+        "id": "daily_008",
+        "type": "daily",
+        "location": "engine_room",
+        "mood_hint": "satisfied",
+        "context": "Finally fixed a minor leak in the coolant line that's been bothering her for days. Feels good to check it off.",
+        "weight": 8
+    },
+    {
+        "id": "daily_009",
+        "type": "daily",
+        "location": "hibernation_bay",
+        "mood_hint": "quiet",
+        "context": "Spent a few minutes by Kane's hibernation pod. The readings are stable. Just... sat there for a while.",
+        "weight": 5
+    },
+    {
+        "id": "daily_010",
+        "type": "daily",
+        "location": "bridge",
+        "mood_hint": "frustrated",
+        "context": "COSMOS was being weird today — kept recalibrating sensors for no apparent reason. Asked it to stop, it said 'optimizing.' Optimizing what??",
+        "weight": 8
+    },
+    {
+        "id": "daily_011",
+        "type": "daily",
+        "location": "kitchen",
+        "mood_hint": "lonely",
+        "context": "Made dinner. Set the table out of habit. Then remembered it's just her.",
+        "weight": 4
+    },
+    {
+        "id": "daily_012",
+        "type": "daily",
+        "location": "observation_deck",
+        "mood_hint": "excited",
+        "context": "Saw a shooting star — or something — streak across the viewport. Too fast to be a meteor. Probably debris.",
+        "weight": 7
+    },
+    {
+        "id": "daily_013",
+        "type": "daily",
+        "location": "engine_room",
+        "mood_hint": "amused",
+        "context": "The wrench she uses most has a dent shaped exactly like a crescent moon. She's noticed it before but it still makes her smile.",
+        "weight": 6
+    },
+    {
+        "id": "daily_014",
+        "type": "daily",
+        "location": "corridor",
+        "mood_hint": "spooked",
+        "context": "A panel in the hallway rattled while she walked past. Just loose screws, probably. Probably.",
+        "weight": 7
+    },
+    {
+        "id": "daily_015",
+        "type": "daily",
+        "location": "living_quarters",
+        "mood_hint": "reflective",
+        "context": "Looked at the calendar. Hard to say how long she's been here now. Days blur together in deep space.",
+        "weight": 5
+    },
+    {
+        "id": "work_001",
+        "type": "work",
+        "location": "engine_room",
+        "mood_hint": "focused",
+        "context": "Running a full diagnostic on the warp drive. Numbers look good but one parameter keeps drifting 0.2% off spec.",
+        "weight": 7
+    },
+    {
+        "id": "work_002",
+        "type": "work",
+        "location": "life_support",
+        "mood_hint": "alert",
+        "context": "CO2 scrubber efficiency dropped by 3%. Within tolerance but she wants to check the filters anyway.",
+        "weight": 6
+    },
+    {
+        "id": "work_003",
+        "type": "work",
+        "location": "navigation",
+        "mood_hint": "puzzled",
+        "context": "The nav computer keeps suggesting a course correction she didn't ask for. COSMOS says the star charts updated automatically.",
+        "weight": 6
+    },
+    {
+        "id": "work_004",
+        "type": "work",
+        "location": "power_systems",
+        "mood_hint": "determined",
+        "context": "Solar panel array on the hull needs cleaning — cosmic dust buildup is reducing efficiency. EVA time.",
+        "weight": 7
+    },
+    {
+        "id": "work_005",
+        "type": "work",
+        "location": "engine_room",
+        "mood_hint": "annoyed",
+        "context": "One of the secondary fuel injectors is making a clicking noise. It did this last month too. Temporary fix again.",
+        "weight": 7
+    },
+    {
+        "id": "emotional_001",
+        "type": "emotional",
+        "location": "living_quarters",
+        "mood_hint": "vulnerable",
+        "context": "Had a dream she can't quite remember. Woke up with the feeling that someone called her name. Nobody did.",
+        "weight": 3
+    },
+    {
+        "id": "emotional_002",
+        "type": "emotional",
+        "location": "storage",
+        "mood_hint": "sad",
+        "context": "Found a hair tie in an old drawer. Same type her father used. Or... she thinks it's the same type. Memory is blurry.",
+        "weight": 3
+    },
+    {
+        "id": "emotional_003",
+        "type": "emotional",
+        "location": "observation_deck",
+        "mood_hint": "lonely",
+        "context": "The stars are so far away. Every single one. Sometimes the distance feels real in a way that's hard to explain.",
+        "weight": 3
+    },
+    {
+        "id": "emotional_004",
+        "type": "emotional",
+        "location": "hibernation_bay",
+        "mood_hint": "worried",
+        "context": "Kane's pod readings had a brief fluctuation. Within normal range but... she keeps checking. Just in case.",
+        "weight": 3
+    },
+    {
+        "id": "emotional_005",
+        "type": "emotional",
+        "location": "bridge",
+        "mood_hint": "existential",
+        "context": "COSMOS mentioned today is the anniversary of when The Otter first launched. She wasn't on the ship then. But it feels like it's been forever.",
+        "weight": 2
+    },
+    {
+        "id": "danger_001",
+        "type": "danger",
+        "location": "hull",
+        "mood_hint": "tense",
+        "context": "A small micrometeorite hit the outer hull. No breach, but the impact alarm went off. Heart was racing for a minute.",
+        "weight": 1
+    },
+    {
+        "id": "danger_002",
+        "type": "danger",
+        "location": "engine_room",
+        "mood_hint": "alarmed",
+        "context": "The main reactor output spiked unexpectedly for about 10 seconds. COSMOS says it was a sensor error. She's not fully convinced.",
+        "weight": 1
+    },
+    {
+        "id": "danger_003",
+        "type": "danger",
+        "location": "bridge",
+        "mood_hint": "scared",
+        "context": "Something appeared on the long-range sensors for a moment — a brief contact, then it vanished. Could be sensor noise. Could be something else.",
+        "weight": 1
+    }
+]

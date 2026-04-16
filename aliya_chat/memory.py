@@ -42,29 +42,73 @@ class Memory:
 
     CREATE INDEX IF NOT EXISTS idx_summaries_session
         ON summaries(session_id);
+
+    -- 每日日程（上帝模块生成）
+    CREATE TABLE IF NOT EXISTS daily_schedule (
+        date TEXT PRIMARY KEY,
+        wake_time TEXT NOT NULL,
+        sleep_time TEXT NOT NULL,
+        mood TEXT NOT NULL DEFAULT 'normal',
+        work_seed_id TEXT,
+        work_description TEXT,
+        is_staying_up INTEGER DEFAULT 0,
+        created_at TEXT DEFAULT (datetime('now'))
+    );
+
+    -- 随机事件记录
+    CREATE TABLE IF NOT EXISTS event_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        occurred_at TEXT DEFAULT (datetime('now')),
+        seed_id TEXT,
+        event_type TEXT,
+        context TEXT,
+        was_offline INTEGER DEFAULT 0,
+        aliya_response TEXT
+    );
+
+    -- 关系进度
+    CREATE TABLE IF NOT EXISTS relationship (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        phase INTEGER DEFAULT 1,
+        first_interaction_date TEXT,
+        total_conversation_turns INTEGER DEFAULT 0,
+        active_days INTEGER DEFAULT 0,
+        last_active_date TEXT,
+        phase_updated_at TEXT
+    );
+
+    -- Aliya 的键值状态
+    CREATE TABLE IF NOT EXISTS aliya_state (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
+        updated_at TEXT DEFAULT (datetime('now'))
+    );
     """
 
-    SUMMARIZATION_PROMPT = """You are a conversation memory extractor for a character named Aliya — a young woman engineer on a stranded spaceship, speaking with someone from 1000 years in the past.
+    SUMMARIZATION_PROMPT = """You are a conversation memory keeper for Aliya — a young woman engineer on a stranded spaceship, speaking with Nolan from 1000 years in the past.
 
-Given the conversation below, produce a concise structured summary with these sections:
+CRITICAL: Your job is to remember IMPORTANT things about this conversation so Aliya can reference them in future chats.
 
-1. **Relationship State** — How the user relates to Aliya, communication style, trust level
-2. **Key Facts Learned** — Discrete facts about the user (name, preferences, life details) as bullet points
-3. **Emotional Arc** — How the conversation's emotional tone has evolved
-4. **Unresolved Threads** — Questions asked but not answered, promises made, topics to revisit
-5. **Conversation Metadata** — Main topics discussed
+Extract and summarize:
 
-Be concise. Each bullet should be one sentence max. Omit small talk that carries no information.
+1. **Key Facts About Nolan** — What did Nolan tell you about himself? (name, interests, situation, questions asked)
+2. **Topics Discussed** — What subjects did you talk about?
+3. **Aliyan's Feelings/State** — How did Aliya seem to feel during this conversation?
+4. **Things to Remember** — Facts, promises, unresolved questions, things Nolan seemed to care about
 
-If a previous summary exists, merge it with the new content — resolve conflicts in favor of newer information.
+IMPORTANT RULES:
+- If Nolan mentioned something about himself, ALWAYS include it
+- If you discussed something specific, note it
+- If Aliya shared something personal, remember it
+- Keep each point very brief — 1 sentence max
 
-Previous summary:
+Previous summary (add new info to these):
 {previous_summary}
 
-New messages to incorporate:
+New messages:
 {new_messages}
 
-Output the complete updated summary:"""
+Output updated summary:"""
 
     def __init__(self, db_path: str | Path):
         self.db = sqlite3.connect(str(db_path), check_same_thread=False)
@@ -243,3 +287,192 @@ Output the complete updated summary:"""
     def close(self):
         # Summarize on close if needed
         self.db.close()
+
+    # ── Daily Schedule ──
+
+    def get_today_schedule(self, date: str) -> dict | None:
+        """获取某天的日程。"""
+        row = self.db.execute(
+            "SELECT date, wake_time, sleep_time, mood, work_seed_id, "
+            "work_description, is_staying_up "
+            "FROM daily_schedule WHERE date = ?",
+            (date,),
+        ).fetchone()
+        if not row:
+            return None
+        return {
+            "date": row[0],
+            "wake_time": row[1],
+            "sleep_time": row[2],
+            "mood": row[3],
+            "work_seed_id": row[4],
+            "work_description": row[5],
+            "is_staying_up": bool(row[6]),
+        }
+
+    def save_schedule(self, date: str, schedule: dict):
+        """保存一天的日程。"""
+        self.db.execute(
+            "INSERT OR REPLACE INTO daily_schedule "
+            "(date, wake_time, sleep_time, mood, work_seed_id, "
+            "work_description, is_staying_up) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (
+                date,
+                schedule["wake_time"],
+                schedule["sleep_time"],
+                schedule["mood"],
+                schedule.get("work_seed_id"),
+                schedule.get("work_description"),
+                1 if schedule.get("is_staying_up") else 0,
+            ),
+        )
+        self.db.commit()
+
+    # ── Events ──
+
+    def log_event(self, seed_id: str, event_type: str, context: str,
+                  was_offline: bool = False):
+        """记录一个随机事件。"""
+        self.db.execute(
+            "INSERT INTO event_log (seed_id, event_type, context, was_offline) "
+            "VALUES (?, ?, ?, ?)",
+            (seed_id, event_type, context, 1 if was_offline else 0),
+        )
+        self.db.commit()
+
+    def get_recent_event(self) -> dict | None:
+        """获取最近一条未消费的随机事件。"""
+        # 获取最近 1 小时内、还没有被 aliya_response 标记的事件
+        row = self.db.execute(
+            "SELECT id, seed_id, event_type, context, occurred_at "
+            "FROM event_log "
+            "WHERE aliya_response IS NULL "
+            "ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        if not row:
+            return None
+        return {
+            "id": row[0],
+            "seed_id": row[1],
+            "event_type": row[2],
+            "context": row[3],
+            "occurred_at": row[4],
+        }
+
+    def mark_event_consumed(self, event_id: int, aliya_response: str = ""):
+        """标记事件已被 Aliya 消费（说过相关的话了）。"""
+        self.db.execute(
+            "UPDATE event_log SET aliya_response = ? WHERE id = ?",
+            (aliya_response, event_id),
+        )
+        self.db.commit()
+
+    # ── Relationship ──
+
+    def get_relationship_phase(self) -> int:
+        """返回当前关系阶段。"""
+        row = self.db.execute(
+            "SELECT phase FROM relationship WHERE id = 1"
+        ).fetchone()
+        return row[0] if row else 1
+
+    def get_relationship(self) -> dict | None:
+        """返回完整的关系数据。"""
+        row = self.db.execute(
+            "SELECT phase, first_interaction_date, total_conversation_turns, "
+            "active_days, last_active_date "
+            "FROM relationship WHERE id = 1"
+        ).fetchone()
+        if not row:
+            return None
+        return {
+            "phase": row[0],
+            "first_interaction_date": row[1],
+            "total_conversation_turns": row[2],
+            "active_days": row[3],
+            "last_active_date": row[4],
+        }
+
+    def init_relationship(self, date: str):
+        """初始化关系记录（仅首次）。"""
+        existing = self.db.execute(
+            "SELECT id FROM relationship WHERE id = 1"
+        ).fetchone()
+        if not existing:
+            self.db.execute(
+                "INSERT INTO relationship (id, phase, first_interaction_date) "
+                "VALUES (1, 1, ?)",
+                (date,),
+            )
+            self.db.commit()
+
+    def increment_turns(self):
+        """对话轮次 +1。"""
+        self.db.execute(
+            "UPDATE relationship SET total_conversation_turns = total_conversation_turns + 1 "
+            "WHERE id = 1"
+        )
+        self.db.commit()
+
+    def log_active_day(self, date: str):
+        """记录用户今天活跃（如果还没记录的话）。"""
+        rel = self.get_relationship()
+        if rel and rel["last_active_date"] == date:
+            return  # 今天已经记录过了
+        self.db.execute(
+            "UPDATE relationship SET "
+            "active_days = active_days + 1, "
+            "last_active_date = ? "
+            "WHERE id = 1",
+            (date,),
+        )
+        self.db.commit()
+
+    def update_phase(self, new_phase: int):
+        """更新关系阶段。"""
+        self.db.execute(
+            "UPDATE relationship SET phase = ?, phase_updated_at = datetime('now') "
+            "WHERE id = 1",
+            (new_phase,),
+        )
+        self.db.commit()
+
+    # ── Key-Value State ──
+
+    def get_state(self, key: str, default: str = "") -> str:
+        """获取一个状态值。"""
+        row = self.db.execute(
+            "SELECT value FROM aliya_state WHERE key = ?", (key,)
+        ).fetchone()
+        return row[0] if row else default
+
+    def set_state(self, key: str, value: str):
+        """设置一个状态值。"""
+        self.db.execute(
+            "INSERT OR REPLACE INTO aliya_state (key, value, updated_at) "
+            "VALUES (?, ?, datetime('now'))",
+            (key, value),
+        )
+        self.db.commit()
+
+    # ── Last Message Time ──
+
+    def get_last_message_time(self) -> str | None:
+        """获取最近一条消息的时间。"""
+        row = self.db.execute(
+            "SELECT created_at FROM messages ORDER BY id DESC LIMIT 1"
+        ).fetchone()
+        return row[0] if row else None
+
+    # ── App Lifecycle ──
+
+    def record_shutdown(self):
+        """记录程序关闭时间。"""
+        from datetime import datetime
+        self.set_state("last_shutdown", datetime.now().isoformat())
+
+    def get_last_shutdown(self) -> str | None:
+        """获取上次程序关闭时间。"""
+        val = self.get_state("last_shutdown", "")
+        return val if val else None

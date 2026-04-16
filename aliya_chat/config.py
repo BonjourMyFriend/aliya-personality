@@ -7,6 +7,7 @@ PROJECT_DIR = BASE_DIR.parent
 ENV_PATH = PROJECT_DIR / ".env"
 DB_PATH = BASE_DIR / "aliya_chat.db"
 SYSTEM_PROMPT_PATH = PROJECT_DIR / "aliya_system_prompt.txt"
+SEEDS_PATH = BASE_DIR / "seeds.json"
 PORTRAITS_DIR = BASE_DIR / "assets" / "portraits"
 
 # API
@@ -17,8 +18,11 @@ SUMMARY_MODEL = os.getenv("SUMMARY_MODEL", "claude-haiku-4-5-20251001")
 MAX_TOKENS = 2048
 
 # Memory
-SUMMARY_THRESHOLD_CHARS = 15000
-RECENT_TURNS_IN_CONTEXT = 20
+SUMMARY_THRESHOLD_CHARS = 1500  # 降到很低，确保对话几轮后就生成摘要
+RECENT_TURNS_IN_CONTEXT = 40  # 增加历史上下文，让Aliya有更多记忆
+
+# Time
+SHIP_TIME_OFFSET_HOURS = 5  # Aliya is always 5 hours behind the user
 
 # Timing (words per minute)
 WPM_READING = 230

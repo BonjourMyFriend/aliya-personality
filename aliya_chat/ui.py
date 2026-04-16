@@ -183,16 +183,21 @@ class InputBar(ctk.CTkFrame):
 class AliyaWindow(ctk.CTk):
     """The main chat window."""
 
-    def __init__(self, chat_engine, memory, session_id):
+    def __init__(self, chat_engine, memory, session_id, state, offline_messages=None):
         super().__init__()
 
         self.chat_engine = chat_engine
         self.memory = memory
         self.session_id = session_id
+        self._aliya_state = state  # 注意：不能用 self.state，会覆盖 tkinter 的 state() 方法
         self.sim = TypingSimulator()
+        self._offline_messages = offline_messages or []
 
         # Generation counter — prevents stale callbacks from old responses
         self._response_gen = 0
+
+        # Queue for proactive messages from the god module (background thread)
+        self._proactive_queue: queue.Queue = queue.Queue()
 
         # Window setup
         self.title("Aliya")
@@ -206,6 +211,9 @@ class AliyaWindow(ctk.CTk):
 
         # Load existing conversation
         self._load_history()
+
+        # Show offline messages if any
+        self._show_offline_messages()
 
         # Focus input
         self.input_bar.entry.focus()
@@ -250,8 +258,8 @@ class AliyaWindow(ctk.CTk):
         self._update_time()
 
     def _ship_time(self) -> str:
-        now = datetime.now()
-        return f"Ship Time: {now.strftime('%H:%M')}"
+        ship_time = self._aliya_state.get_ship_time()
+        return f"Ship Time: {ship_time.strftime('%H:%M')}"
 
     def _update_time(self):
         self._time_label.configure(text=self._ship_time())
@@ -275,6 +283,19 @@ class AliyaWindow(ctk.CTk):
             is_user = msg["role"] == "user"
             self.chat_area.add_bubble(msg["content"], is_user=is_user)
 
+    def _show_offline_messages(self):
+        """展示离线期间 Aliya 留的消息。"""
+        if not self._offline_messages:
+            return
+
+        # Add them to the chat area as Aliya bubbles
+        for msg in self._offline_messages:
+            self.chat_area.add_bubble(msg["content"], is_user=False)
+
+        # Also store them in the database
+        for msg in self._offline_messages:
+            self.memory.add_message(self.session_id, "assistant", msg["content"])
+
     # ── Message Flow ──
 
     def _on_user_send(self, text: str):
@@ -284,6 +305,20 @@ class AliyaWindow(ctk.CTk):
 
         # Show user bubble
         self.chat_area.add_bubble(text, is_user=True)
+
+        # Store user message in DB first (always, even if Aliya is sleeping)
+        self.memory.add_message(self.session_id, "user", text)
+
+        # Track relationship
+        from datetime import datetime
+        self.memory.increment_turns()
+        today = datetime.now().strftime("%Y-%m-%d")
+        self.memory.log_active_day(today)
+
+        # Check if Aliya is sleeping
+        if self._aliya_state.get_activity() == "sleeping":
+            # Don't lock input, don't show typing — just silently save
+            return
 
         # Lock input
         self.input_bar.lock()
@@ -344,6 +379,14 @@ class AliyaWindow(ctk.CTk):
                     if remaining:
                         self._sentences_ready.append(remaining)
                         self._buffer = ""
+
+                elif msg["type"] == "sleeping":
+                    # Aliya is asleep — remove typing indicator, unlock input
+                    if self._typing_indicator:
+                        self.chat_area.remove_widget(self._typing_indicator)
+                        self._typing_indicator = None
+                    self.input_bar.unlock()
+                    return
 
                 elif msg["type"] == "error":
                     self._stream_done = True
@@ -415,5 +458,6 @@ class AliyaWindow(ctk.CTk):
         )
 
     def _on_close(self):
-        self.memory.deactivate_session(self.session_id)
+        # 只记录关闭时间，不 deactivate session（保持 session 活跃以便下次恢复）
+        self.memory.record_shutdown()
         self.destroy()
